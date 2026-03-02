@@ -23,12 +23,12 @@ def run_experiment(
         base_data = generate_array(size, array_type)
 
         for alg in algorithms:
-            data_copy = base_data.copy()
+            arr_to_sort = base_data.copy()
 
             start_time = time.perf_counter()
-            alg(data_copy)
+            alg(arr_to_sort)
             end_time = time.perf_counter()
-
+            assert arr_to_sort == sorted(base_data)
             elapsed_time = end_time - start_time
             results[alg.__name__].append(elapsed_time)
 
