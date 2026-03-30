@@ -23,6 +23,7 @@ def compare_split(comm, local_data, partner, rank):
 
     return new_local, not np.array_equal(local_data, new_local)
 
+
 def parallel_shell_sort(comm: MPI.Comm, data: np.ndarray) -> np.ndarray:
     rank = comm.Get_rank()
     size = comm.Get_size()
