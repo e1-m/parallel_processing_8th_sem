@@ -154,7 +154,7 @@ fn main() {
 
     if rank == 0 {
         if let Some(metrics) = metrics_opt {
-            save_metrics_to_json(&[metrics], "metrics.json");
+            save_metrics_to_json(&[metrics], "data/metrics.json");
             println!(
                 "--> Done p={} | Averaged over {} tries. Verification successful!",
                 size, args.tries
