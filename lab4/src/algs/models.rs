@@ -1,5 +1,6 @@
 use std::ops::{Index, IndexMut};
 
+#[derive(Clone)]
 pub struct Matrix {
     data: Vec<f64>,
     rows: usize,

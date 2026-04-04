@@ -11,6 +11,13 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::time::Instant;
 
+#[derive(clap::ValueEnum, Clone, Debug)]
+enum Algorithm {
+    Naive,
+    Fox,
+    Cannon,
+}
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -22,6 +29,8 @@ struct Args {
     n: usize,
     #[arg(long, default_value_t = 5, help = "Number of tries to average")]
     tries: usize,
+    #[arg(long, value_enum, default_value_t = Algorithm::Naive, help = "Algorithm to use")]
+    algo: Algorithm,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -134,23 +143,34 @@ fn main() {
     let world = universe.world();
     let rank = world.rank();
     let size = world.size();
-    
+
     let a = Matrix::random(args.m, args.k);
     let b = Matrix::random(args.k, args.n);
 
+    let (algo_name, multiply_func) = match args.algo {
+        Algorithm::Naive => (
+            "Naive",
+            algs::naive::multiply_mpi
+                as fn(&SimpleCommunicator, &Matrix, &Matrix) -> Result<Option<Matrix>, String>,
+        ),
+        Algorithm::Fox => (
+            "Fox",
+            algs::fox::multiply_mpi
+                as fn(&SimpleCommunicator, &Matrix, &Matrix) -> Result<Option<Matrix>, String>,
+        ),
+        Algorithm::Cannon => (
+            "Cannon",
+            algs::cannon::multiply_mpi
+                as fn(&SimpleCommunicator, &Matrix, &Matrix) -> Result<Option<Matrix>, String>,
+        ),
+    };
+
     let task_name = format!(
-        "Task: Naive Matrix Mul ({}x{} * {}x{})",
-        args.m, args.k, args.k, args.n
+        "Algorithm: {} ({}x{} * {}x{})",
+        algo_name, args.m, args.k, args.k, args.n
     );
 
-    let metrics_opt = run_experiment(
-        &world,
-        &task_name,
-        &a,
-        &b,
-        algs::naive::multiply_mpi,
-        args.tries,
-    );
+    let metrics_opt = run_experiment(&world, &task_name, &a, &b, multiply_func, args.tries);
 
     if rank == 0 {
         if let Some(metrics) = metrics_opt {
