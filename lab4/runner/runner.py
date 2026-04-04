@@ -3,10 +3,10 @@ import json
 import os
 import matplotlib.pyplot as plt
 
-P_VALUES = [1, 2, 4, 8]
-M = 300
-N = 300
-K = 300
+P_VALUES = [1, 4, 9]
+M = 360
+N = 360
+K = 360
 TRIES = 3
 METRICS_FILE = "data/metrics.json"
 
@@ -24,6 +24,7 @@ def run_mpi_experiments():
             "--m", str(M),
             "--n", str(N),
             "--k", str(K),
+            "--algo", "fox",
             "--tries", str(TRIES)
         ]
         subprocess.run(cmd, check=True, env=env)
