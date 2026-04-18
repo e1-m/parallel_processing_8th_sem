@@ -41,27 +41,30 @@ fn distribute_data(
     let local_n = calculate_local_size(rank, size, total_elements);
     let mut local_data = vec![0u32; local_n];
 
+    let root_process = world.process_at_rank(0);
+
     if rank == 0 {
         let global_data = data.expect("Rank 0 must provide global data");
-        local_data.copy_from_slice(&global_data[0..local_n]);
 
-        let mut current_offset = local_n;
-        for target_rank in 1..size {
-            let target_n = calculate_local_size(target_rank, size, total_elements);
-            let target_slice = &global_data[current_offset..current_offset + target_n];
+        let mut counts: Vec<mpi::Count> = Vec::with_capacity(size);
+        let mut displs: Vec<mpi::Count> = Vec::with_capacity(size);
+        let mut current_offset = 0;
 
-            world.process_at_rank(target_rank as i32).send(target_slice);
+        for target_rank in 0..size {
+            let target_n = calculate_local_size(target_rank, size, total_elements) as mpi::Count;
+            counts.push(target_n);
+            displs.push(current_offset);
             current_offset += target_n;
         }
+
+        let partition = mpi::datatype::Partition::new(global_data, counts, displs);
+        root_process.scatter_varcount_into_root(&partition, &mut local_data[..]);
     } else {
-        let root_process = world.process_at_rank(0);
-        let (received_data, _status) = root_process.receive_vec::<u32>();
-        local_data = received_data;
+        root_process.scatter_varcount_into(&mut local_data[..]);
     }
 
     local_data
 }
-
 fn count_local_frequencies(data: &[u32], max_val: usize) -> Vec<u32> {
     let mut counts = vec![0u32; max_val + 1];
     for &val in data {

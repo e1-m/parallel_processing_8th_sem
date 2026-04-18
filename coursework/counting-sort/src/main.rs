@@ -80,7 +80,6 @@ fn run_experiment(
     let size = world.size() as usize;
     let mut total_time = 0.0;
 
-    // Calculate expected sequentially on Rank 0 for verification
     let expected_result = if rank == 0 {
         Some(counting_sort::counting_sort_sequential(global_data_opt.unwrap(), max_val))
     } else {
@@ -128,7 +127,7 @@ fn main() {
     let rank = world.rank();
     let size = world.size();
 
-    let global_data_opt = if rank == 0 {
+    let data = if rank == 0 {
         Some(generate_data(args.elements, args.max_val))
     } else {
         None
@@ -142,7 +141,7 @@ fn main() {
     let metrics_opt = run_experiment(
         &world,
         &task_name,
-        global_data_opt.as_deref(), // Passes Option<&[u32]> safely
+        data.as_deref(),
         args.elements,
         args.max_val,
         args.tries,
