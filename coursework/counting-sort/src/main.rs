@@ -23,6 +23,8 @@ struct Args {
 struct ExperimentMetrics {
     task_name: String,
     p: i32,
+    elements: usize,
+    max_val: usize,
     avg_time: f64,
 }
 
@@ -90,7 +92,6 @@ fn run_experiment(
         world.barrier();
         let start_time = Instant::now();
 
-
         let result = counting_sort::counting_sort_mpi(world, global_data_opt, total_elements, max_val)
             .unwrap_or_else(|e| {
                 panic!("MPI Sorting failed: {}", e);
@@ -112,6 +113,8 @@ fn run_experiment(
         Some(ExperimentMetrics {
             task_name: task_name.to_string(),
             p: size as i32,
+            elements: total_elements,
+            max_val,
             avg_time: total_time / (tries as f64),
         })
     } else {
@@ -133,10 +136,7 @@ fn main() {
         None
     };
 
-    let task_name = format!(
-        "Algorithm: Parallel Counting Sort (elements={}, max_val={})",
-        args.elements, args.max_val
-    );
+    let task_name = "Parallel Counting Sort".to_string();
 
     let metrics_opt = run_experiment(
         &world,
